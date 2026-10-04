@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Carbon Credit Report | CarbonX{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Carbon Credit Report</h1>
+    <p>Emission performance and carbon credit position of each establishment.</p>
+</div>
+
+
+<div class="data-card">
+
+    <div class="card-header">
+        <div>
+            <h2>Credit Assessment</h2>
+            <p>Comparison between baseline, allowed and actual emissions.</p>
+        </div>
+    </div>
+
+
+    {% if rows %}
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Establishment</th>
+                    <th>Baseline</th>
+                    <th>Sector</th>
+                    <th>Reduction</th>
+                    <th>Allowed Limit</th>
+                    <th>Actual Emission</th>
+                    <th>Carbon Credit</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for r in rows %}
+
+                <tr>
+
+                    <td>
+                        <strong>{{ r.name }}</strong>
+                    </td>
+
+                    <td>
+                        {{ r.baseline }} kg CO₂
+                    </td>
+
+                    <td>
+                        {{ r.sector }}
+                    </td>
+
+                    <td>
+                        {{ r.reduction }}%
+                    </td>
+
+                    <td>
+                        {{ r.allowed }} kg CO₂
+                    </td>
+
+                    <td>
+                        {{ r.actual }} kg CO₂
+                    </td>
+
+                    <td>
+                        <strong>{{ r.credit }}</strong> tCO₂e
+                    </td>
+
+                    <td>
+                        <span class="status-badge {{ 'deficit' if r.status == 'Deficit' else 'surplus' }}">
+                            {{ r.status }}
+                        </span>
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-state">
+
+        <h3>No credit report available</h3>
+
+        <p>
+            Add an establishment and record its activities to generate
+            a carbon credit assessment.
+        </p>
+
+        <a href="/add_entity" class="primary-button">
+            Add Establishment
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

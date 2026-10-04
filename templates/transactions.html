@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction History | CarbonX{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Transaction History</h1>
+    <p>Record of carbon credit transactions between establishments.</p>
+</div>
+
+
+<div class="data-card">
+
+    <div class="card-header">
+
+        <div>
+            <h2>All Transactions</h2>
+            <p>Completed and recorded carbon credit trades.</p>
+        </div>
+
+        <a href="/trade" class="secondary-button">
+            Go to Marketplace
+        </a>
+
+    </div>
+
+
+    {% if transactions %}
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Seller</th>
+                    <th>Buyer</th>
+                    <th>Credits</th>
+                    <th>Price / Credit</th>
+                    <th>Total Value</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for transaction in transactions %}
+
+                <tr>
+
+                    <td>
+                        #{{ transaction.transaction_id }}
+                    </td>
+
+                    <td>
+                        {{ transaction.seller }}
+                    </td>
+
+                    <td>
+                        {{ transaction.buyer }}
+                    </td>
+
+                    <td>
+                        {{ transaction.credit_amount }}
+                    </td>
+
+                    <td>
+                        ₹{{ "%.2f"|format(transaction.price_per_credit) }}
+                    </td>
+
+                    <td>
+                        <strong>
+                            ₹{{ "%.2f"|format(transaction.total_amount) }}
+                        </strong>
+                    </td>
+
+                    <td>
+                        <span class="status-badge">
+                            {{ transaction.status }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {{ transaction.created_at }}
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-state">
+
+        <h3>No transactions found</h3>
+
+        <p>
+            Completed carbon credit purchases will appear here.
+        </p>
+
+        <a href="/trade" class="primary-button">
+            Open Marketplace
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+
+{% block title %}Carbon Credit Marketplace | CarbonX{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Carbon Credit Marketplace</h1>
+    <p>Buy and sell verified carbon credits between establishments.</p>
+</div>
+
+
+<!-- SELL -->
+
+<div class="trade-grid">
+
+    <div class="trade-card">
+
+        <h2>Sell Carbon Credits</h2>
+        <p class="section-subtitle">
+            List your available carbon credits for sale.
+        </p>
+
+        <form action="/create-listing" method="POST">
+
+            <div class="form-group">
+                <label>Seller</label>
+
+                <select name="seller_est_id" class="searchable" required>
+                    <option value="">Select Seller</option>
+
+                    {% for establishment in establishments %}
+                    <option value="{{ establishment.est_id }}">
+                        {{ establishment.est_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+            <div class="form-group">
+                <label>Credits to Sell</label>
+
+                <input
+                    type="number"
+                    name="credit_amount"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="Credits"
+                    required>
+            </div>
+
+
+            <div class="form-group">
+                <label>Price per Credit (₹)</label>
+
+                <input
+                    type="number"
+                    name="price_per_credit"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="Price"
+                    required>
+            </div>
+
+
+            <button type="submit">
+                Create Listing
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <!-- AI FORECAST -->
+
+    <div class="trade-card ai-card">
+
+        <div class="card-icon">🤖</div>
+
+        <h2>AI Market Forecast</h2>
+
+        {% if prediction.available %}
+
+            <div class="forecast-grid">
+
+                <div>
+                    <span>Current Price</span>
+                    <strong>₹{{ prediction.current_price }}</strong>
+                </div>
+
+                <div>
+                    <span>Predicted Price</span>
+                    <strong>₹{{ prediction.predicted_price }}</strong>
+                </div>
+
+                <div>
+                    <span>Model MAE</span>
+                    <strong>₹{{ prediction.mae }}</strong>
+                </div>
+
+            </div>
+
+        {% else %}
+
+            <div class="forecast-message">
+                {{ prediction.message }}
+            </div>
+
+        {% endif %}
+
+        <a href="/market" class="secondary-button">
+            View Market Analytics
+        </a>
+
+    </div>
+
+</div>
+
+<div class="trade-card wallet-section">
+
+    <div class="section-header">
+        <div>
+            <h2>Credit Wallet</h2>
+            <p>Current carbon credit holdings of each establishment.</p>
+        </div>
+    </div>
+
+    <div class="wallet-toolbar">
+        <input type="text" id="walletSearch" placeholder="Search establishment..." autocomplete="off">
+        <span id="walletCount" class="wallet-count"></span>
+        <button type="button" id="walletToggle" class="secondary-button">Show all</button>
+    </div>
+
+    <div class="wallet-table-wrapper">
+        <table class="wallet-table">
+            <thead>
+                <tr>
+                    <th>Establishment</th>
+                    <th>Available Credits</th>
+                    <th>Reserved Credits</th>
+                    <th>Tradable Credits</th>
+                </tr>
+            </thead>
+
+            <tbody id="walletBody">
+                {% for wallet in wallets %}
+                <tr class="wallet-row" data-name="{{ wallet.est_name|lower }}" data-tradable="{{ wallet.available_credit - wallet.reserved_credit }}">
+                    <td>
+                        <strong>{{ wallet.est_name }}</strong>
+                    </td>
+
+                    <td>
+                        {{ "%.2f"|format(wallet.available_credit) }}
+                    </td>
+
+                    <td>
+                        {{ "%.2f"|format(wallet.reserved_credit) }}
+                    </td>
+
+                    <td>
+                        <strong>
+                            {{ "%.2f"|format(
+                                wallet.available_credit - wallet.reserved_credit
+                            ) }}
+                        </strong>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+
+<!-- MARKETPLACE -->
+
+<div class="data-card">
+
+    <div class="card-header">
+
+        <div>
+            <h2>Active Listings</h2>
+            <p>Carbon credits currently available for purchase.</p>
+        </div>
+
+    </div>
+
+
+    {% if listings %}
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Seller</th>
+                    <th>Credits Available</th>
+                    <th>Price / Credit</th>
+                    <th>Total Value</th>
+                    <th>Purchase</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for listing in listings %}
+
+                <tr>
+
+                    <td>
+                        <strong>{{ listing.est_name }}</strong>
+                    </td>
+
+                    <td>
+                        {{ "%.2f"|format(listing.remaining_credit) }}
+                    </td>
+
+                    <td>
+                        ₹{{ "%.2f"|format(listing.price_per_credit) }}
+                    </td>
+
+                    <td>
+                        ₹{{ "%.2f"|format(
+                            listing.remaining_credit *
+                            listing.price_per_credit
+                        ) }}
+                    </td>
+
+                    <td>
+
+                        <form
+                            action="/buy-credit"
+                            method="POST"
+                            class="buy-form">
+
+                            <input
+                                type="hidden"
+                                name="listing_id"
+                                value="{{ listing.listing_id }}">
+
+
+                            <select
+                                name="buyer_est_id"
+                                class="searchable"
+                                required>
+
+                                <option value="">
+                                    Buyer
+                                </option>
+
+                                {% for establishment in establishments %}
+
+                                    {% if establishment.est_id != listing.seller_est_id %}
+
+                                    <option value="{{ establishment.est_id }}">
+                                        {{ establishment.est_name }}
+                                    </option>
+
+                                    {% endif %}
+
+                                {% endfor %}
+
+                            </select>
+
+
+                            <input
+                                type="number"
+                                name="quantity"
+                                min="0.01"
+                                max="{{ listing.remaining_credit }}"
+                                step="0.01"
+                                placeholder="Credits"
+                                required>
+
+
+                            <button type="submit">
+                                Buy
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-state">
+
+        <h3>No active listings</h3>
+
+        <p>
+            There are currently no carbon credits available for purchase.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- TRANSACTION HISTORY -->
+
+<div class="data-card">
+
+    <div class="card-header">
+
+        <div>
+            <h2>Transaction History</h2>
+            <p>Recent carbon credit trades.</p>
+        </div>
+
+        <a href="/transactions" class="secondary-button">
+            View All
+        </a>
+
+    </div>
+
+
+    {% if transactions %}
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Seller</th>
+                    <th>Buyer</th>
+                    <th>Credits</th>
+                    <th>Price / Credit</th>
+                    <th>Total Value</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for transaction in transactions %}
+
+                <tr>
+
+                    <td>{{ transaction.seller }}</td>
+
+                    <td>{{ transaction.buyer }}</td>
+
+                    <td>{{ transaction.credit_amount }}</td>
+
+                    <td>
+                        ₹{{ "%.2f"|format(transaction.price_per_credit) }}
+                    </td>
+
+                    <td>
+                        <strong>
+                            ₹{{ "%.2f"|format(transaction.total_amount) }}
+                        </strong>
+                    </td>
+
+                    <td>
+                        <span class="status-badge">
+                            {{ transaction.status }}
+                        </span>
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-state">
+        <p>No transactions found.</p>
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- MARKET ANALYTICS -->
+
+<div class="data-card">
+
+    <div class="card-header">
+
+        <div>
+            <h2>Market Snapshot</h2>
+            <p>Current marketplace statistics.</p>
+        </div>
+
+        <a href="/market" class="secondary-button">
+            Full Analytics
+        </a>
+
+    </div>
+
+
+    <div class="analytics-grid">
+
+        <div class="analytics-card">
+            <span>Active Listings</span>
+            <strong>{{ active_listings }}</strong>
+        </div>
+
+        <div class="analytics-card">
+            <span>Credits Available</span>
+            <strong>{{ credits_available }}</strong>
+        </div>
+
+        <div class="analytics-card">
+            <span>Average Price</span>
+            <strong>₹{{ "%.2f"|format(average_price) }}</strong>
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+    .wallet-toolbar { display:flex; align-items:center; gap:14px; margin:14px 0 4px; }
+    .wallet-toolbar input { max-width:280px; }
+    .wallet-toolbar button { margin-left:auto; border:none; cursor:pointer; }
+    .wallet-count { color:#666; font-size:14px; }
+    .select-search { width:100%; margin-bottom:6px; padding:8px 10px; font-size:13px; }
+    .buy-form .select-search { width:110px; margin:0; }
+</style>
+<script>
+(function () {
+    // ---- Credit wallet: top N by tradable credits, expandable, searchable
+    const LIMIT = 10;
+    const body = document.getElementById('walletBody');
+    if (body) {
+        const rows = Array.from(body.querySelectorAll('.wallet-row'));
+        rows.sort((a, b) => parseFloat(b.dataset.tradable) - parseFloat(a.dataset.tradable));
+        rows.forEach(r => body.appendChild(r));
+        const search = document.getElementById('walletSearch');
+        const toggle = document.getElementById('walletToggle');
+        const count = document.getElementById('walletCount');
+        let expanded = false;
+        function render() {
+            const q = search.value.trim().toLowerCase();
+            let matched = 0, shown = 0;
+            rows.forEach(r => {
+                const ok = !q || r.dataset.name.includes(q);
+                if (ok) matched++;
+                const show = ok && (expanded || q || shown < LIMIT);
+                if (show && ok) shown++;
+                r.style.display = show ? '' : 'none';
+            });
+            count.textContent = 'Showing ' + shown + ' of ' + rows.length + (q ? ' (filtered)' : ' (highest credits first)');
+            toggle.textContent = expanded ? 'Show top ' + LIMIT : 'Show all ' + rows.length;
+            toggle.style.display = (rows.length <= LIMIT || q) ? 'none' : '';
+        }
+        search.addEventListener('input', render);
+        toggle.addEventListener('click', () => { expanded = !expanded; render(); });
+        render();
+    }
+
+    // ---- Searchable seller / buyer dropdowns
+    document.querySelectorAll('select.searchable').forEach(sel => {
+        const all = Array.from(sel.options).map(o => ({ value: o.value, text: o.text.trim() }));
+        const box = document.createElement('input');
+        box.type = 'text'; box.className = 'select-search'; box.placeholder = 'Search...';
+        box.autocomplete = 'off';
+        sel.parentNode.insertBefore(box, sel);
+        box.addEventListener('input', () => {
+            const q = box.value.trim().toLowerCase();
+            const keep = sel.value;
+            sel.innerHTML = '';
+            all.filter(o => o.value === '' || o.text.toLowerCase().includes(q) || o.value === keep)
+               .forEach(o => sel.add(new Option(o.text, o.value, false, o.value === keep)));
+            if (q && sel.options.length === 2 && !keep) sel.selectedIndex = 1;   // single match: preselect
+        });
+    });
+})();
+</script>
+
+{% endblock %}

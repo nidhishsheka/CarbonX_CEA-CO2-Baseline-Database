@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Add Establishment | CarbonX{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Add Establishment</h1>
+    <p>Register an organization and define its baseline emissions.</p>
+</div>
+
+<div class="form-card">
+
+    <form method="POST">
+
+        <div class="form-section">
+            <h2>Establishment Details</h2>
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label for="entity_name">Establishment Name</label>
+                    <input
+                        type="text"
+                        id="entity_name"
+                        name="entity_name"
+                        placeholder="e.g. ABC Steel"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="entity_type">Establishment Type</label>
+
+                    <select
+                        id="entity_type"
+                        name="entity_type"
+                        required>
+
+                        {% for s in sectors %}
+                        <option value="{{ s.sector }}">
+                            {{ s.sector }}
+                        </option>
+                        {% endfor %}
+
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label for="location">Location</label>
+
+                <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    placeholder="e.g. Mangalore, Karnataka"
+                    required>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-section">
+
+            <h2>Baseline Emissions</h2>
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <label for="baseline">
+                        Baseline Emission (kg CO₂)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="baseline"
+                        name="baseline"
+                        value="9000"
+                        min="0"
+                        step="0.01">
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="baseline_year">
+                        Baseline Year
+                    </label>
+
+                    <input
+                        type="number"
+                        id="baseline_year"
+                        name="baseline_year"
+                        value="2024"
+                        min="1900"
+                        max="2100">
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a href="/" class="secondary-button">
+                Cancel
+            </a>
+
+            <button type="submit">
+                Add Establishment
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

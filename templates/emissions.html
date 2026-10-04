@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Emission Records | CarbonX{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Emission Records</h1>
+    <p>Review recorded activities and their calculated carbon emissions.</p>
+</div>
+
+<div class="data-card">
+
+    <div class="card-header">
+        <div>
+            <h2>Recorded Emissions</h2>
+            <p>Emission calculations based on recorded activities.</p>
+        </div>
+
+        <a href="/add_activity" class="primary-button">
+            + Add Activity
+        </a>
+    </div>
+
+    {% if rows %}
+
+    <div class="wallet-toolbar">
+        <input type="text" id="emSearch" placeholder="Search establishment or source..." autocomplete="off">
+        <span id="emCount" class="wallet-count"></span>
+        <button type="button" id="emToggle" class="secondary-button">Show all</button>
+    </div>
+
+    <div class="table-container">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Establishment</th>
+                    <th>Source</th>
+                    <th>Quantity</th>
+                    <th>Emission Factor</th>
+                    <th>Emission</th>
+                </tr>
+            </thead>
+
+            <tbody id="emBody">
+
+                {% for r in rows %}
+
+                <tr class="em-row" data-name="{{ (r.est_name ~ ' ' ~ r.source_name)|lower }}" data-emission="{{ r.emission_kg }}">
+
+                    <td>
+                        <strong>{{ r.est_name }}</strong>
+                    </td>
+
+                    <td>
+                        {{ r.source_name }}
+                    </td>
+
+                    <td>
+                        {{ r.quantity }} {{ r.unit }}
+                    </td>
+
+                    <td>
+                        {{ r.factor_value }}
+                        kg CO₂ / {{ r.unit }}
+                    </td>
+
+                    <td>
+                        <strong>{{ r.emission_kg }}</strong>
+                        kg CO₂
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-state">
+
+        <h3>No emission records yet</h3>
+
+        <p>
+            Record an activity to start calculating emissions.
+        </p>
+
+        <a href="/add_activity" class="primary-button">
+            Add Activity
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<style>
+    .wallet-toolbar { display:flex; align-items:center; gap:14px; margin:14px 0 14px; }
+    .wallet-toolbar input { max-width:300px; }
+    .wallet-toolbar button { margin-left:auto; border:none; cursor:pointer; }
+    .wallet-count { color:#666; font-size:14px; }
+</style>
+<script>
+(function () {
+    const LIMIT = 10;
+    const body = document.getElementById('emBody');
+    if (!body) return;
+    const rows = Array.from(body.querySelectorAll('.em-row'));
+    rows.sort((a, b) => parseFloat(b.dataset.emission) - parseFloat(a.dataset.emission));
+    rows.forEach(r => body.appendChild(r));
+    const search = document.getElementById('emSearch');
+    const toggle = document.getElementById('emToggle');
+    const count = document.getElementById('emCount');
+    let expanded = false;
+    function render() {
+        const q = search.value.trim().toLowerCase();
+        let shown = 0;
+        rows.forEach(r => {
+            const ok = !q || r.dataset.name.includes(q);
+            const show = ok && (expanded || q || shown < LIMIT);
+            if (show) shown++;
+            r.style.display = show ? '' : 'none';
+        });
+        count.textContent = 'Showing ' + shown + ' of ' + rows.length + (q ? ' (filtered)' : ' (highest emission first)');
+        toggle.textContent = expanded ? 'Show top ' + LIMIT : 'Show all ' + rows.length;
+        toggle.style.display = (rows.length <= LIMIT || q) ? 'none' : '';
+    }
+    search.addEventListener('input', render);
+    toggle.addEventListener('click', () => { expanded = !expanded; render(); });
+    render();
+})();
+</script>
+
+{% endblock %}
